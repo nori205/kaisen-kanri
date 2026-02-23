@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>回線管理アプリ</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f0f2f5;
+      --card: #ffffff;
+      --primary: #4361ee;
+      --primary-dark: #3451d1;
+      --danger: #ef233c;
+      --warn: #f77f00;
+      --ok: #2dc653;
+      --text: #1a1a2e;
+      --sub: #6b7280;
+      --border: #e5e7eb;
+      --radius: 14px;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ヘッダー */
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(67,97,238,0.3);
+    }
+    header h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.02em; }
+    header .subtitle { font-size: 0.72rem; opacity: 0.8; margin-top: 2px; }
+
+    .add-btn {
+      background: #fff;
+      color: var(--primary);
+      border: none;
+      border-radius: 50px;
+      padding: 8px 18px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: transform 0.1s, box-shadow 0.1s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+    .add-btn:active { transform: scale(0.96); }
+    .add-btn svg { width: 16px; height: 16px; }
+
+    /* メインコンテンツ */
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 20px 16px 80px;
+    }
+
+    /* 凡例 */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      color: var(--sub);
+    }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+
+    /* 空状態 */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--sub);
+    }
+    .empty .icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty p { font-size: 0.9rem; line-height: 1.6; }
+
+    /* カードグリッド */
+    .cards {
+      display: grid;
+      gap: 14px;
+    }
+
+    /* カード */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      border-left: 5px solid var(--border);
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+    .card:active { transform: scale(0.99); }
+
+    .card.urgent   { border-left-color: var(--danger); background: #fff5f5; }
+    .card.warning  { border-left-color: var(--warn);   background: #fffbf0; }
+    .card.upcoming { border-left-color: var(--ok);     background: #f0faf4; }
+
+    /* カードヘッダー */
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .card-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    .card-persons {
+      font-size: 0.78rem;
+      color: var(--sub);
+      margin-bottom: 12px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .card-person-item { display: flex; gap: 4px; }
+    .card-person-label { opacity: 0.75; }
+    .card-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .icon-btn {
+      width: 32px; height: 32px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      transition: background 0.15s;
+    }
+    .edit-btn  { background: #eff2ff; color: var(--primary); }
+    .del-btn   { background: #fff0f1; color: var(--danger); }
+    .edit-btn:hover { background: #dde3ff; }
+    .del-btn:hover  { background: #ffd6d9; }
+
+    /* カード情報行 */
+    .card-rows { display: flex; flex-direction: column; gap: 8px; }
+    .card-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+    .row-label {
+      color: var(--sub);
+      font-size: 0.75rem;
+      white-space: nowrap;
+      min-width: 110px;
+      padding-top: 1px;
+    }
+    .row-value {
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    /* バッジ */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 50px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+    .badge-urgent  { background: var(--danger); color: #fff; }
+    .badge-warning { background: var(--warn);   color: #fff; }
+    .badge-ok      { background: var(--ok);     color: #fff; }
+    .badge-past    { background: #9ca3af;       color: #fff; }
+
+    /* メモ */
+    .card-memo {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: var(--bg);
+      border-radius: 8px;
+      font-size: 0.82rem;
+      color: var(--sub);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .card-memo::before {
+      content: '📝 ';
+      font-size: 0.8rem;
+    }
+
+    /* モーダル */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .overlay.open { display: flex; }
+
+    @media (min-width: 600px) {
+      .overlay { align-items: center; }
+    }
+
+    .modal {
+      background: var(--card);
+      border-radius: var(--radius) var(--radius) 0 0;
+      width: 100%;
+      max-width: 520px;
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 24px 20px 32px;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.15);
+      animation: slideUp 0.25s ease;
+    }
+    @media (min-width: 600px) {
+      .modal {
+        border-radius: var(--radius);
+        max-height: 85vh;
+      }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(40px); opacity: 0; }
+      to   { transform: translateY(0);   opacity: 1; }
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-title svg { color: var(--primary); }
+
+    /* フォーム */
+    .form-group { margin-bottom: 16px; }
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--sub);
+      margin-bottom: 6px;
+    }
+    input[type="text"],
+    input[type="tel"],
+    input[type="date"],
+    textarea {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 13px;
+      font-size: 1rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--card);
+      transition: border-color 0.2s;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    input:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(67,97,238,0.12);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* オプション解約期限 */
+    .option-section-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--sub);
+      margin-bottom: 8px;
+    }
+    .option-rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .option-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .option-num {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--primary);
+      min-width: 22px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .option-row input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 11px;
+      font-size: 0.9rem;
+    }
+    .option-row input[type="date"] {
+      width: 148px;
+      flex-shrink: 0;
+      padding: 9px 11px;
+      font-size: 0.9rem;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .btn-cancel {
+      flex: 1;
+      padding: 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--sub);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-cancel:hover { background: var(--bg); }
+    .btn-save {
+      flex: 2;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-save:hover { background: var(--primary-dark); }
+
+    /* 削除確認 */
+    .confirm-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .confirm-overlay.open { display: flex; }
+    .confirm-box {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      animation: pop 0.2s ease;
+    }
+    @keyframes pop {
+      from { transform: scale(0.92); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+    .confirm-box .icon { font-size: 2.2rem; margin-bottom: 10px; }
+    .confirm-box h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+    .confirm-box p { font-size: 0.85rem; color: var(--sub); margin-bottom: 20px; }
+    .confirm-actions { display: flex; gap: 10px; }
+    .btn-del-confirm {
+      flex: 1;
+      padding: 11px;
+      border: none;
+      border-radius: 10px;
+      background: var(--danger);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    /* ソートバー */
+    .sort-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      font-size: 0.8rem;
+      color: var(--sub);
+    }
+    .sort-bar select {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 5px 8px;
+      font-size: 0.8rem;
+      background: var(--card);
+      color: var(--text);
+      outline: none;
+    }
+
+    /* レスポンシブ */
+    @media (min-width: 520px) {
+      .card-rows { flex-direction: row; flex-wrap: wrap; }
+      .card-row  { width: calc(50% - 4px); }
+    }
+
+    /* ヘッダーボタングループ */
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+
+    /* CSV 出力ボタン */
+    .csv-btn {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.55);
+      border-radius: 50px;
+      padding: 7px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .csv-btn:hover  { background: rgba(255,255,255,0.28); }
+    .csv-btn:active { transform: scale(0.96); }
+
+    /* チェックリスト */
+    .card-checklist {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .checklist-section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--sub);
+      margin-bottom: 4px;
+      padding-bottom: 2px;
+      border-bottom: 1px solid var(--border);
+    }
+    .checklist-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 16px;
+    }
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--sub);
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: 0;
+    }
+    .check-item input[type="checkbox"] {
+      width: auto;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+      background: none;
+      accent-color: var(--primary);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .check-item input[type="checkbox"]:focus {
+      box-shadow: none;
+      border-color: transparent;
+    }
+    .check-item.done { color: #b0b8c4; }
+    .check-item.done span { text-decoration: line-through; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📱 回線管理</h1>
+    <div class="subtitle">スマホ・携帯回線の期限管理</div>
+  </div>
+  <div class="header-actions">
+    <button class="csv-btn" onclick="exportCSV()" title="CSVファイルとして書き出す">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      CSV出力
+    </button>
+    <button class="add-btn" onclick="openModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      回線を追加
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--danger)"></div> 7日以内</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--warn)"></div> 30日以内</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--ok)"></div> 30日超</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--border)"></div> 期限なし</div>
+  </div>
+
+  <div class="sort-bar">
+    <span>並び替え：</span>
+    <select id="sortSelect" onchange="renderCards()">
+      <option value="deadline">期限が近い順</option>
+      <option value="name">回線名順</option>
+      <option value="created">登録順</option>
+    </select>
+  </div>
+
+  <div id="cardContainer" class="cards"></div>
+</main>
+
+<!-- 追加・編集モーダル -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/>
+        <line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/>
+      </svg>
+      <span id="modalTitle">回線を追加</span>
+    </div>
+    <form id="lineForm" onsubmit="saveLine(event)">
+      <div class="form-group">
+        <label>回線名 <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="f_name" placeholder="例：楽天モバイル" required maxlength="50">
+      </div>
+      <div class="form-group">
+        <label>電話番号</label>
+        <input type="tel" id="f_phone" placeholder="例：090-1234-5678" maxlength="20">
+      </div>
+      <div class="form-row-2">
+        <div>
+          <label>契約者</label>
+          <input type="text" id="f_contractor" placeholder="例：山田太郎" maxlength="50">
+        </div>
+        <div>
+          <label>使用者</label>
+          <input type="text" id="f_user" placeholder="例：山田花子" maxlength="50">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>契約日</label>
+        <input type="date" id="f_contractDate">
+      </div>
+      <div>
+        <div class="option-section-label">オプション解約期限</div>
+        <div class="option-rows">
+          <div class="option-row">
+            <span class="option-num">①</span>
+            <input type="text" id="f_opt1_name" placeholder="オプション名">
+            <input type="date" id="f_opt1_date">
+          </div>
+          <div class="option-row">
+            <span class="option-num">②</span>
+            <input type="text" id="f_opt2_name" placeholder="オプション名">
+            <input type="date" id="f_opt2_date">
+          </div>
+          <div class="option-row">
+            <span class="option-num">③</span>
+            <input type="text" id="f_opt3_name" placeholder="オプション名">
+            <input type="date" id="f_opt3_date">
+          </div>
+          <div class="option-row">
+            <span class="option-num">④</span>
+            <input type="text" id="f_opt4_name" placeholder="オプション名">
+            <input type="date" id="f_opt4_date">
+          </div>
+          <div class="option-row">
+            <span class="option-num">⑤</span>
+            <input type="text" id="f_opt5_name" placeholder="オプション名">
+            <input type="date" id="f_opt5_date">
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>乗り換え可能日（MNP解除日）</label>
+        <input type="date" id="f_transferDate">
+      </div>
+      <div class="form-group">
+        <label>端末返却日</label>
+        <input type="date" id="f_returnDate">
+      </div>
+      <div class="form-group">
+        <label>稼働確認日</label>
+        <input type="date" id="f_operationDate">
+      </div>
+      <div class="form-group">
+        <label>メモ</label>
+        <textarea id="f_memo" placeholder="特記事項など…" maxlength="500"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" onclick="closeModal()">キャンセル</button>
+        <button type="submit" class="btn-save">💾 保存する</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 削除確認 -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="icon">🗑️</div>
+    <h3>回線を削除しますか？</h3>
+    <p id="confirmName" style="font-weight:700;color:var(--text);margin-bottom:4px"></p>
+    <p>この操作は元に戻せません。</p>
+    <div class="confirm-actions">
+      <button class="btn-cancel" onclick="closeConfirm()">戻る</button>
+      <button class="btn-del-confirm" onclick="confirmDelete()">削除する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'kaisenkanri_v1';
+  const OPT_NUMS = ['①','②','③','④','⑤'];
+  const CHECK_SECTIONS = [
+    {
+      label: 'オプション解約チェック',
+      items: [
+        ['opt1Cancelled', 'オプション1 解約済み'],
+        ['opt2Cancelled', 'オプション2 解約済み'],
+        ['opt3Cancelled', 'オプション3 解約済み'],
+        ['opt4Cancelled', 'オプション4 解約済み'],
+        ['opt5Cancelled', 'オプション5 解約済み'],
+      ],
+    },
+    {
+      label: '稼働確認チェック',
+      items: [
+        ['callConfirmed', '通話確認済み'],
+        ['dataConfirmed', '通信確認済み'],
+        ['smsConfirmed',  'ショートメール確認済み'],
+      ],
+    },
+  ];
+  const DEFAULT_CHECKLIST = () => ({
+    opt1Cancelled: false, opt2Cancelled: false, opt3Cancelled: false,
+    opt4Cancelled: false, opt5Cancelled: false,
+    callConfirmed: false, dataConfirmed: false, smsConfirmed: false,
+  });
+  let lines = [];
+  let editingId = null;
+  let deletingId = null;
+
+  // ── データ読み書き ──────────────────────────────
+  function load() {
+    try {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      // v1 → 新形式マイグレーション（optionDeadline単体 → optionDeadlines配列）
+      lines = data.map(line => {
+        if (!line.optionDeadlines) {
+          line.optionDeadlines = [
+            { name: '', date: line.optionDeadline || '' },
+            { name: '', date: '' },
+            { name: '', date: '' },
+            { name: '', date: '' },
+            { name: '', date: '' },
+          ];
+          delete line.optionDeadline;
+        }
+        if (!line.checklist) {
+          line.checklist = DEFAULT_CHECKLIST();
+        } else {
+          const newCL = DEFAULT_CHECKLIST();
+          for (const key of Object.keys(newCL)) {
+            if (line.checklist[key] !== undefined) newCL[key] = line.checklist[key];
+          }
+          if (!newCL.opt1Cancelled && line.checklist.optionCancelled) {
+            newCL.opt1Cancelled = line.checklist.optionCancelled;
+          }
+          line.checklist = newCL;
+        }
+        return line;
+      });
+    } catch { lines = []; }
+  }
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
+  }
+
+  // ── 日付ユーティリティ ─────────────────────────
+  function today() {
+    const d = new Date();
+    d.setHours(0,0,0,0);
+    return d;
+  }
+  function parseDate(str) {
+    if (!str) return null;
+    const [y,m,d] = str.split('-').map(Number);
+    return new Date(y, m-1, d);
+  }
+  function daysUntil(str) {
+    const d = parseDate(str);
+    if (!d) return null;
+    return Math.round((d - today()) / 86400000);
+  }
+  function fmtDate(str) {
+    const d = parseDate(str);
+    if (!d) return '—';
+    return d.toLocaleDateString('ja-JP', { year:'numeric', month:'short', day:'numeric' });
+  }
+
+  // urgency = 'urgent' | 'warning' | 'upcoming' | 'past' | null
+  function getUrgency(days) {
+    if (days === null) return null;
+    if (days < 0)  return 'past';
+    if (days <= 7) return 'urgent';
+    if (days <= 30) return 'warning';
+    return 'upcoming';
+  }
+
+  function allDeadlineDays(line) {
+    return [
+      ...(line.optionDeadlines || []).map(o => daysUntil(o.date)),
+      daysUntil(line.transferDate),
+      daysUntil(line.returnDate),
+    ].filter(d => d !== null);
+  }
+
+  function cardUrgency(line) {
+    const days = allDeadlineDays(line).filter(d => d >= 0);
+    if (!days.length) return '';
+    const min = Math.min(...days);
+    if (min <= 7)  return 'urgent';
+    if (min <= 30) return 'warning';
+    return 'upcoming';
+  }
+
+  function urgencyLabel(urgency, days) {
+    if (urgency === 'urgent')   return `<span class="badge badge-urgent">⚠️ あと${days}日</span>`;
+    if (urgency === 'warning')  return `<span class="badge badge-warning">🔔 あと${days}日</span>`;
+    if (urgency === 'upcoming') return `<span class="badge badge-ok">✓ あと${days}日</span>`;
+    if (urgency === 'past')     return `<span class="badge badge-past">期限切れ</span>`;
+    return '';
+  }
+
+  // ── 並び替え ────────────────────────────────────
+  function sortedLines() {
+    const sort = document.getElementById('sortSelect').value;
+    return [...lines].sort((a, b) => {
+      if (sort === 'name') return a.name.localeCompare(b.name, 'ja');
+      if (sort === 'created') return a.id - b.id;
+      // deadline: 期限が近い順（nullは末尾）
+      const da = minDays(a), db = minDays(b);
+      if (da === null && db === null) return 0;
+      if (da === null) return 1;
+      if (db === null) return -1;
+      return da - db;
+    });
+  }
+  function minDays(line) {
+    const vals = allDeadlineDays(line);
+    return vals.length ? Math.min(...vals) : null;
+  }
+
+  // ── レンダリング ────────────────────────────────
+  function renderCards() {
+    const container = document.getElementById('cardContainer');
+    if (!lines.length) {
+      container.innerHTML = `
+        <div class="empty">
+          <div class="icon">📱</div>
+          <p>まだ回線が登録されていません。<br>「回線を追加」ボタンから登録してください。</p>
+        </div>`;
+      return;
+    }
+    container.innerHTML = sortedLines().map(line => {
+      const cu = cardUrgency(line);
+
+      // 契約者・使用者
+      const persons = [];
+      if (line.contractor) persons.push(`<span class="card-person-item"><span class="card-person-label">契約者：</span><strong>${esc(line.contractor)}</strong></span>`);
+      if (line.user)       persons.push(`<span class="card-person-item"><span class="card-person-label">使用者：</span><strong>${esc(line.user)}</strong></span>`);
+      const personsHtml = persons.length
+        ? `<div class="card-persons">${persons.join('')}</div>`
+        : '';
+
+      // オプション解約期限（日付があるものだけ表示）
+      const optRows = (line.optionDeadlines || []).map((o, i) => {
+        if (!o.date) return '';
+        const days = daysUntil(o.date);
+        const label = o.name ? esc(o.name) : `オプション${OPT_NUMS[i]}`;
+        return `
+          <div class="card-row">
+            <span class="row-label">⏰ ${label}</span>
+            <span class="row-value">
+              ${fmtDate(o.date)}
+              ${urgencyLabel(getUrgency(days), days)}
+            </span>
+          </div>`;
+      }).join('');
+
+      const tDays = daysUntil(line.transferDate);
+      const rDays = daysUntil(line.returnDate);
+
+      const cl = line.checklist || {};
+      const checklistHtml = CHECK_SECTIONS.map(section =>
+        `<div class="checklist-section">
+          <div class="checklist-section-label">${section.label}</div>
+          <div class="checklist-items">
+            ${section.items.map(([key, label]) =>
+              `<label class="check-item${cl[key] ? ' done' : ''}">
+                <input type="checkbox"${cl[key] ? ' checked' : ''} onchange="toggleCheck('${line.id}','${key}',this)">
+                <span>${label}</span>
+              </label>`
+            ).join('')}
+          </div>
+        </div>`
+      ).join('');
+
+      return `
+      <div class="card ${cu}">
+        <div class="card-header">
+          <div class="card-name">${esc(line.name)}</div>
+          <div class="card-actions">
+            <button class="icon-btn edit-btn" onclick="openModal('${line.id}')" title="編集">✏️</button>
+            <button class="icon-btn del-btn"  onclick="openConfirm('${line.id}')" title="削除">🗑️</button>
+          </div>
+        </div>
+        ${personsHtml}
+        <div class="card-rows">
+          <div class="card-row">
+            <span class="row-label">📅 契約日</span>
+            <span class="row-value">${fmtDate(line.contractDate)}</span>
+          </div>
+          ${line.phone ? `
+          <div class="card-row">
+            <span class="row-label">📞 電話番号</span>
+            <span class="row-value">${esc(line.phone)}</span>
+          </div>` : ''}
+          ${optRows}
+          <div class="card-row">
+            <span class="row-label">🔄 乗り換え可能日</span>
+            <span class="row-value">
+              ${fmtDate(line.transferDate)}
+              ${line.transferDate ? urgencyLabel(getUrgency(tDays), tDays) : ''}
+            </span>
+          </div>
+          ${line.returnDate ? `
+          <div class="card-row">
+            <span class="row-label">📦 端末返却日</span>
+            <span class="row-value">
+              ${fmtDate(line.returnDate)}
+              ${urgencyLabel(getUrgency(rDays), rDays)}
+            </span>
+          </div>` : ''}
+          ${line.operationDate ? `
+          <div class="card-row">
+            <span class="row-label">✅ 稼働確認日</span>
+            <span class="row-value">${fmtDate(line.operationDate)}</span>
+          </div>` : ''}
+        </div>
+        <div class="card-checklist">${checklistHtml}</div>
+        ${line.memo ? `<div class="card-memo">${esc(line.memo)}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── モーダル ────────────────────────────────────
+  function openModal(id) {
+    editingId = id || null;
+    document.getElementById('modalTitle').textContent = id ? '回線を編集' : '回線を追加';
+    if (id) {
+      const line = lines.find(l => l.id == id);
+      document.getElementById('f_name').value          = line.name          || '';
+      document.getElementById('f_phone').value         = line.phone         || '';
+      document.getElementById('f_contractor').value    = line.contractor    || '';
+      document.getElementById('f_user').value          = line.user          || '';
+      document.getElementById('f_contractDate').value  = line.contractDate  || '';
+      const opts = line.optionDeadlines || [];
+      for (let i = 1; i <= 5; i++) {
+        const o = opts[i-1] || {};
+        document.getElementById(`f_opt${i}_name`).value = o.name || '';
+        document.getElementById(`f_opt${i}_date`).value = o.date || '';
+      }
+      document.getElementById('f_transferDate').value   = line.transferDate   || '';
+      document.getElementById('f_returnDate').value     = line.returnDate     || '';
+      document.getElementById('f_operationDate').value  = line.operationDate  || '';
+      document.getElementById('f_memo').value           = line.memo           || '';
+    } else {
+      document.getElementById('lineForm').reset();
+    }
+    document.getElementById('overlay').classList.add('open');
+    document.getElementById('f_name').focus();
+  }
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('open');
+    editingId = null;
+  }
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('overlay')) closeModal();
+  }
+
+  function saveLine(e) {
+    e.preventDefault();
+    const name = document.getElementById('f_name').value.trim();
+    if (!name) return;
+    const optionDeadlines = [];
+    for (let i = 1; i <= 5; i++) {
+      optionDeadlines.push({
+        name: document.getElementById(`f_opt${i}_name`).value.trim(),
+        date: document.getElementById(`f_opt${i}_date`).value,
+      });
+    }
+    const data = {
+      name,
+      phone:           document.getElementById('f_phone').value.trim(),
+      contractor:      document.getElementById('f_contractor').value.trim(),
+      user:            document.getElementById('f_user').value.trim(),
+      contractDate:    document.getElementById('f_contractDate').value,
+      optionDeadlines,
+      transferDate:    document.getElementById('f_transferDate').value,
+      returnDate:      document.getElementById('f_returnDate').value,
+      operationDate:   document.getElementById('f_operationDate').value,
+      memo:            document.getElementById('f_memo').value.trim(),
+    };
+    if (editingId) {
+      const idx = lines.findIndex(l => l.id == editingId);
+      lines[idx] = { ...lines[idx], ...data };
+    } else {
+      data.id = Date.now();
+      data.checklist = DEFAULT_CHECKLIST();
+      lines.push(data);
+    }
+    save();
+    renderCards();
+    closeModal();
+  }
+
+  // ── 削除 ────────────────────────────────────────
+  function openConfirm(id) {
+    deletingId = id;
+    const line = lines.find(l => l.id == id);
+    document.getElementById('confirmName').textContent = line.name;
+    document.getElementById('confirmOverlay').classList.add('open');
+  }
+  function closeConfirm() {
+    document.getElementById('confirmOverlay').classList.remove('open');
+    deletingId = null;
+  }
+  function confirmDelete() {
+    lines = lines.filter(l => l.id != deletingId);
+    save();
+    renderCards();
+    closeConfirm();
+  }
+
+  // ── チェックリスト ────────────────────────────────
+  function toggleCheck(id, key, el) {
+    const line = lines.find(l => l.id == id);
+    if (!line) return;
+    if (!line.checklist) line.checklist = DEFAULT_CHECKLIST();
+    line.checklist[key] = el.checked;
+    save();
+    el.parentElement.classList.toggle('done', el.checked);
+  }
+
+  // ── CSV 出力 ────────────────────────────────────
+  function exportCSV() {
+    if (!lines.length) { alert('書き出すデータがありません。'); return; }
+    const headers = [
+      '回線名','電話番号','契約者','使用者','契約日',
+      'オプション①名','オプション①期限',
+      'オプション②名','オプション②期限',
+      'オプション③名','オプション③期限',
+      'オプション④名','オプション④期限',
+      'オプション⑤名','オプション⑤期限',
+      '乗り換え可能日','端末返却日','稼働確認日','メモ',
+      'オプション1解約済み','オプション2解約済み','オプション3解約済み','オプション4解約済み','オプション5解約済み',
+      '通話確認済み','通信確認済み','ショートメール確認済み',
+    ];
+    const rows = lines.map(line => {
+      const opts = line.optionDeadlines || Array(5).fill({ name: '', date: '' });
+      const cl = line.checklist || {};
+      return [
+        line.name,
+        line.phone          || '',
+        line.contractor     || '',
+        line.user           || '',
+        line.contractDate   || '',
+        opts[0]?.name || '', opts[0]?.date || '',
+        opts[1]?.name || '', opts[1]?.date || '',
+        opts[2]?.name || '', opts[2]?.date || '',
+        opts[3]?.name || '', opts[3]?.date || '',
+        opts[4]?.name || '', opts[4]?.date || '',
+        line.transferDate   || '',
+        line.returnDate     || '',
+        line.operationDate  || '',
+        line.memo           || '',
+        cl.opt1Cancelled ? '済' : '',
+        cl.opt2Cancelled ? '済' : '',
+        cl.opt3Cancelled ? '済' : '',
+        cl.opt4Cancelled ? '済' : '',
+        cl.opt5Cancelled ? '済' : '',
+        cl.callConfirmed ? '済' : '',
+        cl.dataConfirmed ? '済' : '',
+        cl.smsConfirmed  ? '済' : '',
+      ];
+    });
+    const csv = [headers, ...rows]
+      .map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+      .join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const d = new Date();
+    a.download = `回線管理_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ── 初期化 ──────────────────────────────────────
+  load();
+  renderCards();
+</script>
+</body>
+</html>
