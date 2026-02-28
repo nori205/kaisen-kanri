@@ -217,53 +217,54 @@
       font-size: 0.8rem;
     }
 
-    /* モーダル */
-    .overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
-      z-index: 200;
-      align-items: flex-end;
-      justify-content: center;
-    }
-    .overlay.open { display: flex; }
-
-    @media (min-width: 600px) {
-      .overlay { align-items: center; }
+    /* ─── インラインフォームパネル ─────────────────── */
+    #formPanelsContainer {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 14px;
     }
 
-    .modal {
+    .form-panel {
       background: var(--card);
-      border-radius: var(--radius) var(--radius) 0 0;
-      width: 100%;
-      max-width: 520px;
-      max-height: 92vh;
-      overflow-y: auto;
-      padding: 24px 20px 32px;
-      box-shadow: 0 -4px 24px rgba(0,0,0,0.15);
-      animation: slideUp 0.25s ease;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      border-left: 5px solid var(--primary);
+      animation: slideIn 0.22s ease;
     }
-    @media (min-width: 600px) {
-      .modal {
-        border-radius: var(--radius);
-        max-height: 85vh;
-      }
-    }
-    @keyframes slideUp {
-      from { transform: translateY(40px); opacity: 0; }
+    @keyframes slideIn {
+      from { transform: translateY(-8px); opacity: 0; }
       to   { transform: translateY(0);   opacity: 1; }
     }
 
-    .modal-title {
-      font-size: 1.1rem;
+    .form-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .form-panel-title {
+      font-size: 1rem;
       font-weight: 700;
-      margin-bottom: 20px;
+      color: var(--primary);
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .modal-title svg { color: var(--primary); }
+    .form-panel-title svg { color: var(--primary); flex-shrink: 0; }
+    .discard-btn {
+      background: #fff0f1;
+      color: var(--danger);
+      border: none;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .discard-btn:hover { background: #ffd6d9; }
 
     /* フォーム */
     .form-group { margin-bottom: 16px; }
@@ -367,6 +368,60 @@
       transition: background 0.15s;
     }
     .btn-save:hover { background: var(--primary-dark); }
+
+    /* バリデーションエラー */
+    .input-error {
+      border-color: var(--danger) !important;
+      box-shadow: 0 0 0 3px rgba(239,35,60,0.12) !important;
+    }
+
+    /* モーダル（編集用） */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .overlay.open { display: flex; }
+
+    @media (min-width: 600px) {
+      .overlay { align-items: center; }
+    }
+
+    .modal {
+      background: var(--card);
+      border-radius: var(--radius) var(--radius) 0 0;
+      width: 100%;
+      max-width: 520px;
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 24px 20px 32px;
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.15);
+      animation: slideUp 0.25s ease;
+    }
+    @media (min-width: 600px) {
+      .modal {
+        border-radius: var(--radius);
+        max-height: 85vh;
+      }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(40px); opacity: 0; }
+      to   { transform: translateY(0);   opacity: 1; }
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-title svg { color: var(--primary); }
 
     /* 削除確認 */
     .confirm-overlay {
@@ -507,6 +562,75 @@
     }
     .check-item.done { color: #b0b8c4; }
     .check-item.done span { text-decoration: line-through; }
+
+    /* キャンペーン情報 */
+    .card-campaigns {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .campaign-section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--sub);
+      margin-bottom: 6px;
+    }
+    .campaign-email-display {
+      font-size: 0.78rem;
+      color: var(--sub);
+      margin-bottom: 6px;
+    }
+    .campaign-items {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .campaign-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .campaign-granted {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: 0;
+    }
+    .campaign-granted input[type="checkbox"] {
+      width: auto;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+      background: none;
+      accent-color: var(--ok);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .campaign-granted input[type="checkbox"]:focus {
+      box-shadow: none;
+      border-color: transparent;
+    }
+    .campaign-granted span { color: var(--sub); }
+    .campaign-granted.granted span { color: var(--ok); font-weight: 600; }
+    .campaign-item-date { font-size: 0.72rem; color: var(--sub); }
+
+    /* セクション見出し */
+    .section-heading {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--sub);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1.5px solid var(--border);
+    }
   </style>
 </head>
 <body>
@@ -525,11 +649,11 @@
       </svg>
       CSV出力
     </button>
-    <button class="add-btn" onclick="openModal()">
+    <button class="add-btn" onclick="addNewPanel()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
       </svg>
-      回線を追加
+      新しい回線を追加
     </button>
   </div>
 </header>
@@ -541,6 +665,9 @@
     <div class="legend-item"><div class="legend-dot" style="background:var(--ok)"></div> 30日超</div>
     <div class="legend-item"><div class="legend-dot" style="background:var(--border)"></div> 期限なし</div>
   </div>
+
+  <!-- 入力中のフォームパネル（複数同時表示可能） -->
+  <div id="formPanelsContainer"></div>
 
   <div class="sort-bar">
     <span>並び替え：</span>
@@ -554,7 +681,7 @@
   <div id="cardContainer" class="cards"></div>
 </main>
 
-<!-- 追加・編集モーダル -->
+<!-- 編集モーダル -->
 <div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
   <div class="modal">
     <div class="modal-title">
@@ -562,7 +689,7 @@
         <rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="7" x2="15" y2="7"/>
         <line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/>
       </svg>
-      <span id="modalTitle">回線を追加</span>
+      <span id="modalTitle">回線を編集</span>
     </div>
     <form id="lineForm" onsubmit="saveLine(event)">
       <div class="form-group">
@@ -633,6 +760,55 @@
         <label>メモ</label>
         <textarea id="f_memo" placeholder="特記事項など…" maxlength="500"></textarea>
       </div>
+      <div class="section-heading" style="margin-top:8px">キャンペーン情報</div>
+      <div class="form-group">
+        <label>キャンペーン応募メールアドレス</label>
+        <input type="text" id="f_campaignEmail" placeholder="例：example@email.com" maxlength="100">
+      </div>
+      <div>
+        <div class="option-section-label">キャンペーン（最大3件）</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+          <div>
+            <div class="option-row">
+              <span class="option-num">①</span>
+              <input type="text" id="f_camp1_name" placeholder="キャンペーン名">
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding-left:30px;margin-top:6px">
+              <input type="date" id="f_camp1_date" style="flex:1;max-width:160px;padding:9px 11px;font-size:0.9rem">
+              <label style="display:flex;align-items:center;gap:5px;font-size:0.82rem;font-weight:500;color:var(--sub);white-space:nowrap;cursor:pointer;margin-bottom:0">
+                <input type="checkbox" id="f_camp1_granted" style="width:auto;padding:0;border:none;box-shadow:none;accent-color:var(--ok);cursor:pointer">
+                特典付与済み
+              </label>
+            </div>
+          </div>
+          <div>
+            <div class="option-row">
+              <span class="option-num">②</span>
+              <input type="text" id="f_camp2_name" placeholder="キャンペーン名">
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding-left:30px;margin-top:6px">
+              <input type="date" id="f_camp2_date" style="flex:1;max-width:160px;padding:9px 11px;font-size:0.9rem">
+              <label style="display:flex;align-items:center;gap:5px;font-size:0.82rem;font-weight:500;color:var(--sub);white-space:nowrap;cursor:pointer;margin-bottom:0">
+                <input type="checkbox" id="f_camp2_granted" style="width:auto;padding:0;border:none;box-shadow:none;accent-color:var(--ok);cursor:pointer">
+                特典付与済み
+              </label>
+            </div>
+          </div>
+          <div>
+            <div class="option-row">
+              <span class="option-num">③</span>
+              <input type="text" id="f_camp3_name" placeholder="キャンペーン名">
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;padding-left:30px;margin-top:6px">
+              <input type="date" id="f_camp3_date" style="flex:1;max-width:160px;padding:9px 11px;font-size:0.9rem">
+              <label style="display:flex;align-items:center;gap:5px;font-size:0.82rem;font-weight:500;color:var(--sub);white-space:nowrap;cursor:pointer;margin-bottom:0">
+                <input type="checkbox" id="f_camp3_granted" style="width:auto;padding:0;border:none;box-shadow:none;accent-color:var(--ok);cursor:pointer">
+                特典付与済み
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="form-actions">
         <button type="button" class="btn-cancel" onclick="closeModal()">キャンセル</button>
         <button type="submit" class="btn-save">💾 保存する</button>
@@ -683,15 +859,21 @@
     opt4Cancelled: false, opt5Cancelled: false,
     callConfirmed: false, dataConfirmed: false, smsConfirmed: false,
   });
+  const DEFAULT_CAMPAIGNS = () => [
+    { name: '', granted: false, inquiryDate: '' },
+    { name: '', granted: false, inquiryDate: '' },
+    { name: '', granted: false, inquiryDate: '' },
+  ];
+
   let lines = [];
   let editingId = null;
   let deletingId = null;
+  let panelCounter = 0;
 
   // ── データ読み書き ──────────────────────────────
   function load() {
     try {
       const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-      // v1 → 新形式マイグレーション（optionDeadline単体 → optionDeadlines配列）
       lines = data.map(line => {
         if (!line.optionDeadlines) {
           line.optionDeadlines = [
@@ -715,6 +897,14 @@
           }
           line.checklist = newCL;
         }
+        if (!line.campaigns) {
+          line.campaigns = DEFAULT_CAMPAIGNS();
+        } else {
+          while (line.campaigns.length < 3) {
+            line.campaigns.push({ name: '', granted: false, inquiryDate: '' });
+          }
+        }
+        if (line.campaignEmail === undefined) line.campaignEmail = '';
         return line;
       });
     } catch { lines = []; }
@@ -745,7 +935,6 @@
     return d.toLocaleDateString('ja-JP', { year:'numeric', month:'short', day:'numeric' });
   }
 
-  // urgency = 'urgent' | 'warning' | 'upcoming' | 'past' | null
   function getUrgency(days) {
     if (days === null) return null;
     if (days < 0)  return 'past';
@@ -785,7 +974,6 @@
     return [...lines].sort((a, b) => {
       if (sort === 'name') return a.name.localeCompare(b.name, 'ja');
       if (sort === 'created') return a.id - b.id;
-      // deadline: 期限が近い順（nullは末尾）
       const da = minDays(a), db = minDays(b);
       if (da === null && db === null) return 0;
       if (da === null) return 1;
@@ -805,14 +993,13 @@
       container.innerHTML = `
         <div class="empty">
           <div class="icon">📱</div>
-          <p>まだ回線が登録されていません。<br>「回線を追加」ボタンから登録してください。</p>
+          <p>まだ回線が登録されていません。<br>「新しい回線を追加」ボタンから登録してください。</p>
         </div>`;
       return;
     }
     container.innerHTML = sortedLines().map(line => {
       const cu = cardUrgency(line);
 
-      // 契約者・使用者
       const persons = [];
       if (line.contractor) persons.push(`<span class="card-person-item"><span class="card-person-label">契約者：</span><strong>${esc(line.contractor)}</strong></span>`);
       if (line.user)       persons.push(`<span class="card-person-item"><span class="card-person-label">使用者：</span><strong>${esc(line.user)}</strong></span>`);
@@ -820,7 +1007,6 @@
         ? `<div class="card-persons">${persons.join('')}</div>`
         : '';
 
-      // オプション解約期限（日付があるものだけ表示）
       const optRows = (line.optionDeadlines || []).map((o, i) => {
         if (!o.date) return '';
         const days = daysUntil(o.date);
@@ -837,6 +1023,26 @@
 
       const tDays = daysUntil(line.transferDate);
       const rDays = daysUntil(line.returnDate);
+
+      const camps = line.campaigns || [];
+      const hasCampaignInfo = !!line.campaignEmail || camps.some(c => c.name);
+      const campaignHtml = hasCampaignInfo ? `
+        <div class="card-campaigns">
+          <div class="campaign-section-label">🎁 キャンペーン情報</div>
+          ${line.campaignEmail ? `<div class="campaign-email-display">📧 ${esc(line.campaignEmail)}</div>` : ''}
+          <div class="campaign-items">
+            ${camps.map((c, idx) => {
+              if (!c.name) return '';
+              return `<div class="campaign-item">
+                <label class="campaign-granted${c.granted ? ' granted' : ''}">
+                  <input type="checkbox"${c.granted ? ' checked' : ''} onchange="toggleCampaignGranted('${line.id}',${idx},this)">
+                  <span>${esc(c.name)}</span>
+                </label>
+                ${c.inquiryDate ? `<span class="campaign-item-date">問合日: ${fmtDate(c.inquiryDate)}</span>` : ''}
+              </div>`;
+            }).join('')}
+          </div>
+        </div>` : '';
 
       const cl = line.checklist || {};
       const checklistHtml = CHECK_SECTIONS.map(section =>
@@ -895,6 +1101,7 @@
             <span class="row-value">${fmtDate(line.operationDate)}</span>
           </div>` : ''}
         </div>
+        ${campaignHtml}
         <div class="card-checklist">${checklistHtml}</div>
         ${line.memo ? `<div class="card-memo">${esc(line.memo)}</div>` : ''}
       </div>`;
@@ -907,10 +1114,176 @@
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // ── モーダル ────────────────────────────────────
+  // ── インラインフォームパネル ──────────────────────
+  function buildPanelHTML(pid) {
+    const optRows = [1,2,3,4,5].map(i => `
+      <div class="option-row">
+        <span class="option-num">${OPT_NUMS[i-1]}</span>
+        <input type="text" data-field="opt${i}_name" placeholder="オプション名">
+        <input type="date" data-field="opt${i}_date">
+      </div>`).join('');
+    const campaignRows = [1,2,3].map(i => `
+      <div>
+        <div class="option-row">
+          <span class="option-num">${OPT_NUMS[i-1]}</span>
+          <input type="text" data-field="camp${i}_name" placeholder="キャンペーン名">
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding-left:30px;margin-top:6px">
+          <input type="date" data-field="camp${i}_date" style="flex:1;max-width:160px;padding:9px 11px;font-size:0.9rem">
+          <label style="display:flex;align-items:center;gap:5px;font-size:0.82rem;font-weight:500;color:var(--sub);white-space:nowrap;cursor:pointer;margin-bottom:0">
+            <input type="checkbox" data-field="camp${i}_granted" style="width:auto;padding:0;border:none;box-shadow:none;accent-color:var(--ok);cursor:pointer">
+            特典付与済み
+          </label>
+        </div>
+      </div>`).join('');
+
+    return `
+    <div class="form-panel" id="panel-${pid}">
+      <div class="form-panel-header">
+        <div class="form-panel-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20" rx="2"/>
+            <line x1="9" y1="7" x2="15" y2="7"/>
+            <line x1="9" y1="11" x2="15" y2="11"/>
+            <line x1="9" y1="15" x2="12" y2="15"/>
+          </svg>
+          新しい回線を追加
+        </div>
+        <button class="discard-btn" onclick="discardPanel(${pid})">✕ 破棄</button>
+      </div>
+      <div class="form-group">
+        <label>回線名 <span style="color:var(--danger)">*</span></label>
+        <input type="text" data-field="name" placeholder="例：楽天モバイル" maxlength="50">
+      </div>
+      <div class="form-group">
+        <label>電話番号</label>
+        <input type="tel" data-field="phone" placeholder="例：090-1234-5678" maxlength="20">
+      </div>
+      <div class="form-row-2">
+        <div>
+          <label>契約者</label>
+          <input type="text" data-field="contractor" placeholder="例：山田太郎" maxlength="50">
+        </div>
+        <div>
+          <label>使用者</label>
+          <input type="text" data-field="user" placeholder="例：山田花子" maxlength="50">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>契約日</label>
+        <input type="date" data-field="contractDate">
+      </div>
+      <div>
+        <div class="option-section-label">オプション解約期限</div>
+        <div class="option-rows">${optRows}</div>
+      </div>
+      <div class="form-group">
+        <label>乗り換え可能日（MNP解除日）</label>
+        <input type="date" data-field="transferDate">
+      </div>
+      <div class="form-group">
+        <label>端末返却日</label>
+        <input type="date" data-field="returnDate">
+      </div>
+      <div class="form-group">
+        <label>稼働確認日</label>
+        <input type="date" data-field="operationDate">
+      </div>
+      <div class="form-group">
+        <label>メモ</label>
+        <textarea data-field="memo" placeholder="特記事項など…" maxlength="500"></textarea>
+      </div>
+      <div class="section-heading" style="margin-top:8px">キャンペーン情報</div>
+      <div class="form-group">
+        <label>キャンペーン応募メールアドレス</label>
+        <input type="text" data-field="campaignEmail" placeholder="例：example@email.com" maxlength="100">
+      </div>
+      <div>
+        <div class="option-section-label">キャンペーン（最大3件）</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">${campaignRows}</div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" onclick="discardPanel(${pid})">破棄</button>
+        <button type="button" class="btn-save" onclick="savePanel(${pid})">💾 保存する</button>
+      </div>
+    </div>`;
+  }
+
+  function addNewPanel() {
+    const pid = ++panelCounter;
+    const container = document.getElementById('formPanelsContainer');
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = buildPanelHTML(pid);
+    container.appendChild(wrapper.firstElementChild);
+    const panel = document.getElementById(`panel-${pid}`);
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    panel.querySelector('[data-field="name"]').focus();
+  }
+
+  function discardPanel(pid) {
+    const panel = document.getElementById(`panel-${pid}`);
+    if (panel) panel.remove();
+  }
+
+  function savePanel(pid) {
+    const panel = document.getElementById(`panel-${pid}`);
+    const nameInput = panel.querySelector('[data-field="name"]');
+    const name = nameInput.value.trim();
+
+    // バリデーション
+    if (!name) {
+      nameInput.classList.add('input-error');
+      nameInput.focus();
+      nameInput.addEventListener('input', () => nameInput.classList.remove('input-error'), { once: true });
+      return;
+    }
+
+    const g = field => panel.querySelector(`[data-field="${field}"]`).value;
+    const gt = field => panel.querySelector(`[data-field="${field}"]`).value.trim();
+
+    const optionDeadlines = [];
+    for (let i = 1; i <= 5; i++) {
+      optionDeadlines.push({
+        name: gt(`opt${i}_name`),
+        date: g(`opt${i}_date`),
+      });
+    }
+    const campaigns = [];
+    for (let i = 1; i <= 3; i++) {
+      campaigns.push({
+        name:        gt(`camp${i}_name`),
+        inquiryDate: g(`camp${i}_date`),
+        granted:     !!panel.querySelector(`[data-field="camp${i}_granted"]`).checked,
+      });
+    }
+
+    const data = {
+      id: Date.now(),
+      name,
+      phone:          gt('phone'),
+      contractor:     gt('contractor'),
+      user:           gt('user'),
+      contractDate:   g('contractDate'),
+      optionDeadlines,
+      transferDate:   g('transferDate'),
+      returnDate:     g('returnDate'),
+      operationDate:  g('operationDate'),
+      memo:           gt('memo'),
+      checklist:      DEFAULT_CHECKLIST(),
+      campaignEmail:  gt('campaignEmail'),
+      campaigns,
+    };
+
+    lines.push(data);
+    save();
+    renderCards();
+    panel.remove();
+  }
+
+  // ── 編集モーダル ────────────────────────────────
   function openModal(id) {
     editingId = id || null;
-    document.getElementById('modalTitle').textContent = id ? '回線を編集' : '回線を追加';
+    document.getElementById('modalTitle').textContent = '回線を編集';
     if (id) {
       const line = lines.find(l => l.id == id);
       document.getElementById('f_name').value          = line.name          || '';
@@ -928,6 +1301,14 @@
       document.getElementById('f_returnDate').value     = line.returnDate     || '';
       document.getElementById('f_operationDate').value  = line.operationDate  || '';
       document.getElementById('f_memo').value           = line.memo           || '';
+      document.getElementById('f_campaignEmail').value  = line.campaignEmail  || '';
+      const camps = line.campaigns || DEFAULT_CAMPAIGNS();
+      for (let i = 1; i <= 3; i++) {
+        const c = camps[i-1] || { name: '', granted: false, inquiryDate: '' };
+        document.getElementById(`f_camp${i}_name`).value    = c.name        || '';
+        document.getElementById(`f_camp${i}_date`).value    = c.inquiryDate || '';
+        document.getElementById(`f_camp${i}_granted`).checked = !!c.granted;
+      }
     } else {
       document.getElementById('lineForm').reset();
     }
@@ -953,6 +1334,14 @@
         date: document.getElementById(`f_opt${i}_date`).value,
       });
     }
+    const campaigns = [];
+    for (let i = 1; i <= 3; i++) {
+      campaigns.push({
+        name:        document.getElementById(`f_camp${i}_name`).value.trim(),
+        inquiryDate: document.getElementById(`f_camp${i}_date`).value,
+        granted:     document.getElementById(`f_camp${i}_granted`).checked,
+      });
+    }
     const data = {
       name,
       phone:           document.getElementById('f_phone').value.trim(),
@@ -964,14 +1353,12 @@
       returnDate:      document.getElementById('f_returnDate').value,
       operationDate:   document.getElementById('f_operationDate').value,
       memo:            document.getElementById('f_memo').value.trim(),
+      campaignEmail:   document.getElementById('f_campaignEmail').value.trim(),
+      campaigns,
     };
     if (editingId) {
       const idx = lines.findIndex(l => l.id == editingId);
       lines[idx] = { ...lines[idx], ...data };
-    } else {
-      data.id = Date.now();
-      data.checklist = DEFAULT_CHECKLIST();
-      lines.push(data);
     }
     save();
     renderCards();
@@ -994,6 +1381,16 @@
     save();
     renderCards();
     closeConfirm();
+  }
+
+  // ── キャンペーン特典トグル ─────────────────────────
+  function toggleCampaignGranted(id, idx, el) {
+    const line = lines.find(l => l.id == id);
+    if (!line || !line.campaigns || !line.campaigns[idx]) return;
+    line.campaigns[idx].granted = el.checked;
+    save();
+    const label = el.closest('.campaign-granted');
+    if (label) label.classList.toggle('granted', el.checked);
   }
 
   // ── チェックリスト ────────────────────────────────
@@ -1019,10 +1416,15 @@
       '乗り換え可能日','端末返却日','稼働確認日','メモ',
       'オプション1解約済み','オプション2解約済み','オプション3解約済み','オプション4解約済み','オプション5解約済み',
       '通話確認済み','通信確認済み','ショートメール確認済み',
+      'キャンペーン応募メール',
+      'キャンペーン①名','キャンペーン①問合日','キャンペーン①特典付与',
+      'キャンペーン②名','キャンペーン②問合日','キャンペーン②特典付与',
+      'キャンペーン③名','キャンペーン③問合日','キャンペーン③特典付与',
     ];
     const rows = lines.map(line => {
       const opts = line.optionDeadlines || Array(5).fill({ name: '', date: '' });
       const cl = line.checklist || {};
+      const cs = line.campaigns || Array(3).fill({ name: '', granted: false, inquiryDate: '' });
       return [
         line.name,
         line.phone          || '',
@@ -1046,6 +1448,10 @@
         cl.callConfirmed ? '済' : '',
         cl.dataConfirmed ? '済' : '',
         cl.smsConfirmed  ? '済' : '',
+        line.campaignEmail || '',
+        cs[0]?.name || '', cs[0]?.inquiryDate || '', cs[0]?.granted ? '済' : '',
+        cs[1]?.name || '', cs[1]?.inquiryDate || '', cs[1]?.granted ? '済' : '',
+        cs[2]?.name || '', cs[2]?.inquiryDate || '', cs[2]?.granted ? '済' : '',
       ];
     });
     const csv = [headers, ...rows]
