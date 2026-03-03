@@ -883,8 +883,6 @@
   function load() {
     try {
       const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-      const cm = getCurrentMonth();
-      let needsSave = false;
       lines = data.map(line => {
         if (!line.optionDeadlines) {
           line.optionDeadlines = [
@@ -916,17 +914,8 @@
           }
         }
         if (line.campaignEmail === undefined) line.campaignEmail = '';
-        // 月次稼働確認リセット
-        if (!line.kadoMonth || line.kadoMonth !== cm) {
-          line.checklist.callConfirmed = false;
-          line.checklist.dataConfirmed = false;
-          line.checklist.smsConfirmed  = false;
-          line.kadoMonth = cm;
-          needsSave = true;
-        }
         return line;
       });
-      if (needsSave) save();
     } catch { lines = []; }
   }
   function save() {
@@ -1065,18 +1054,21 @@
         </div>` : '';
 
       const cl = line.checklist || {};
+      const kadoMonthOk = line.kadoMonth === getCurrentMonth();
+      const KADO_KEYS = ['callConfirmed','dataConfirmed','smsConfirmed'];
       const checklistHtml = CHECK_SECTIONS.map(section => {
         const isKado = section.label === '稼働確認チェック';
         const displayLabel = isKado ? `稼働確認チェック（${getMonthLabel()}）` : section.label;
         return `<div class="checklist-section">
           <div class="checklist-section-label">${displayLabel}</div>
           <div class="checklist-items">
-            ${section.items.map(([key, label]) =>
-              `<label class="check-item${cl[key] ? ' done' : ''}">
-                <input type="checkbox"${cl[key] ? ' checked' : ''} onchange="toggleCheck('${line.id}','${key}',this)">
+            ${section.items.map(([key, label]) => {
+              const isChecked = KADO_KEYS.includes(key) ? (kadoMonthOk && !!cl[key]) : !!cl[key];
+              return `<label class="check-item${isChecked ? ' done' : ''}">
+                <input type="checkbox"${isChecked ? ' checked' : ''} onchange="toggleCheck('${line.id}','${key}',this)">
                 <span>${label}</span>
-              </label>`
-            ).join('')}
+              </label>`;
+            }).join('')}
           </div>
         </div>`;
       }).join('');
