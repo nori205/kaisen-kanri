@@ -870,10 +870,21 @@
   let deletingId = null;
   let panelCounter = 0;
 
+  function getCurrentMonth() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  }
+  function getMonthLabel() {
+    const now = new Date();
+    return `${now.getMonth()+1}月`;
+  }
+
   // ── データ読み書き ──────────────────────────────
   function load() {
     try {
       const data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      const cm = getCurrentMonth();
+      let needsSave = false;
       lines = data.map(line => {
         if (!line.optionDeadlines) {
           line.optionDeadlines = [
@@ -905,8 +916,17 @@
           }
         }
         if (line.campaignEmail === undefined) line.campaignEmail = '';
+        // 月次稼働確認リセット
+        if (!line.kadoMonth || line.kadoMonth !== cm) {
+          line.checklist.callConfirmed = false;
+          line.checklist.dataConfirmed = false;
+          line.checklist.smsConfirmed  = false;
+          line.kadoMonth = cm;
+          needsSave = true;
+        }
         return line;
       });
+      if (needsSave) save();
     } catch { lines = []; }
   }
   function save() {
@@ -1045,9 +1065,11 @@
         </div>` : '';
 
       const cl = line.checklist || {};
-      const checklistHtml = CHECK_SECTIONS.map(section =>
-        `<div class="checklist-section">
-          <div class="checklist-section-label">${section.label}</div>
+      const checklistHtml = CHECK_SECTIONS.map(section => {
+        const isKado = section.label === '稼働確認チェック';
+        const displayLabel = isKado ? `稼働確認チェック（${getMonthLabel()}）` : section.label;
+        return `<div class="checklist-section">
+          <div class="checklist-section-label">${displayLabel}</div>
           <div class="checklist-items">
             ${section.items.map(([key, label]) =>
               `<label class="check-item${cl[key] ? ' done' : ''}">
@@ -1056,8 +1078,8 @@
               </label>`
             ).join('')}
           </div>
-        </div>`
-      ).join('');
+        </div>`;
+      }).join('');
 
       return `
       <div class="card ${cu}">
@@ -1270,6 +1292,7 @@
       operationDate:  g('operationDate'),
       memo:           gt('memo'),
       checklist:      DEFAULT_CHECKLIST(),
+      kadoMonth:      getCurrentMonth(),
       campaignEmail:  gt('campaignEmail'),
       campaigns,
     };
@@ -1399,6 +1422,9 @@
     if (!line) return;
     if (!line.checklist) line.checklist = DEFAULT_CHECKLIST();
     line.checklist[key] = el.checked;
+    if (['callConfirmed','dataConfirmed','smsConfirmed'].includes(key)) {
+      line.kadoMonth = getCurrentMonth();
+    }
     save();
     el.parentElement.classList.toggle('done', el.checked);
   }
