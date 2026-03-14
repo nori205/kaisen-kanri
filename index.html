@@ -631,9 +631,34 @@
       padding-bottom: 6px;
       border-bottom: 1.5px solid var(--border);
     }
+
+  <style id="print-style">
+    @media print {
+      body > *:not(#printArea) { display: none !important; }
+      #printArea { display: block !important; }
+    }
+    #printArea {
+      display: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Meiryo', sans-serif;
+      font-size: 11px;
+      color: #000;
+      padding: 10px;
+    }
+    #printArea h2 { font-size: 15px; margin-bottom: 6px; border-bottom: 2px solid #333; padding-bottom: 4px; }
+    #printArea .print-date { font-size: 10px; color: #555; margin-bottom: 12px; }
+    #printArea table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    #printArea th { background: #4361ee; color: #fff; padding: 5px 7px; text-align: left; font-size: 10px; white-space: nowrap; }
+    #printArea td { padding: 5px 7px; border-bottom: 1px solid #ddd; vertical-align: top; font-size: 10px; }
+    #printArea tr:nth-child(even) td { background: #f5f5f5; }
+    #printArea .print-name { font-weight: bold; font-size: 11px; }
+    #printArea .print-warn { color: #c0392b; font-weight: bold; }
+    #printArea .print-caution { color: #e67e22; font-weight: bold; }
+    #printArea .print-note { font-size: 9px; color: #555; margin-top: 16px; border-top: 1px solid #ccc; padding-top: 8px; }
+  </style>
   </style>
 </head>
 <body>
+<div id="printArea"></div>
 
 <header>
   <div>
@@ -650,6 +675,14 @@
       CSV読込
       <input type="file" accept=".csv" style="display:none;" onchange="importCSV(event)">
     </label>
+    <button class="csv-btn" onclick="printLines()" title="回線一覧を印刷する">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <polyline points="6 9 6 2 18 2 18 9"/>
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+        <rect x="6" y="14" width="12" height="8"/>
+      </svg>
+      印刷
+    </button>
     <button class="csv-btn" onclick="exportCSV()" title="CSVファイルとして書き出す">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -1591,6 +1624,84 @@
       event.target.value = '';
     };
     reader.readAsText(file, 'UTF-8');
+  }
+
+
+  // ── 印刷 ────────────────────────────────────────
+  function printLines() {
+    if (!lines.length) { alert('印刷するデータがありません。'); return; }
+
+    const fmtD = d => {
+      if (!d) return '―';
+      const dt = new Date(d);
+      return dt.getFullYear() + '/' + String(dt.getMonth()+1).padStart(2,'0') + '/' + String(dt.getDate()).padStart(2,'0');
+    };
+
+    const urgText = days => {
+      if (days === null) return '';
+      if (days < 0)   return ' 【期限切れ】';
+      if (days <= 7)  return ' 【残' + days + '日】';
+      if (days <= 30) return ' 【残' + days + '日】';
+      return '';
+    };
+
+    const urgClass = days => {
+      if (days === null) return '';
+      if (days < 0 || days <= 7)  return 'print-warn';
+      if (days <= 30) return 'print-caution';
+      return '';
+    };
+
+    const rows = sortedLines().map(line => {
+      const opts = (line.optionDeadlines || []).filter(o => o.date);
+      const optText = opts.map(o => {
+        const d = daysUntil(o.date);
+        const label = o.name || 'オプション';
+        const cls = urgClass(d);
+        return '<span class="' + cls + '">' + esc(label) + ': ' + fmtD(o.date) + urgText(d) + '</span>';
+      }).join('<br>') || '―';
+
+      const tDays = daysUntil(line.transferDate);
+      const rDays = daysUntil(line.returnDate);
+
+      const personParts = [];
+      if (line.contractor) personParts.push('契約者: ' + esc(line.contractor));
+      if (line.user) personParts.push('使用者: ' + esc(line.user));
+
+      return '<tr>' +
+        '<td><span class="print-name">' + esc(line.name) + '</span>' +
+          (personParts.length ? '<br><span style="font-size:9px;color:#555;">' + personParts.join('　') + '</span>' : '') +
+        '</td>' +
+        '<td>' + (line.phone ? esc(line.phone) : '―') + '</td>' +
+        '<td>' + fmtD(line.contractDate) + '</td>' +
+        '<td>' + optText + '</td>' +
+        '<td class="' + urgClass(tDays) + '">' + fmtD(line.transferDate) + urgText(tDays) + '</td>' +
+        '<td class="' + urgClass(rDays) + '">' + fmtD(line.returnDate) + urgText(rDays) + '</td>' +
+        '<td>' + (line.memo ? esc(line.memo) : '―') + '</td>' +
+        '</tr>';
+    }).join('');
+
+    const now = new Date();
+    const dateStr = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 印刷';
+
+    document.getElementById('printArea').innerHTML =
+      '<h2>📱 回線管理一覧</h2>' +
+      '<div class="print-date">' + dateStr + '　※このシートはデータの控えです。復元にはCSVファイルが必要です。</div>' +
+      '<table>' +
+        '<thead><tr>' +
+          '<th>回線名 / 契約者・使用者</th>' +
+          '<th>電話番号</th>' +
+          '<th>契約日</th>' +
+          '<th>オプション解約期限</th>' +
+          '<th>乗り換え可能日</th>' +
+          '<th>端末返却日</th>' +
+          '<th>メモ</th>' +
+        '</tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>' +
+      '<div class="print-note">⚠️ 注意：この紙からアプリへのデータ復元はできません。アプリのバックアップには「CSV出力」ボタンで保存したファイルが必要です。</div>';
+
+    window.print();
   }
 
   // ── 初期化 ──────────────────────────────────────
