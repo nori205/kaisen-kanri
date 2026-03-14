@@ -641,6 +641,15 @@
     <div class="subtitle">スマホ・携帯回線の期限管理</div>
   </div>
   <div class="header-actions">
+    <label class="csv-btn" title="CSVファイルを読み込む" style="cursor:pointer;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 14 12 9 17 14"/>
+        <line x1="12" y1="9" x2="12" y2="21"/>
+      </svg>
+      CSV読込
+      <input type="file" accept=".csv" style="display:none;" onchange="importCSV(event)">
+    </label>
     <button class="csv-btn" onclick="exportCSV()" title="CSVファイルとして書き出す">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -1485,6 +1494,103 @@
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+
+  // ── CSV 読込 ────────────────────────────────────
+  function importCSV(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const text = e.target.result.replace(/^﻿/, '');
+        const rows = text.split(/?
+/).filter(r => r.trim());
+        const dataRows = rows.slice(1);
+        if (!dataRows.length) { alert('データがありません。'); return; }
+
+        const parseRow = row => {
+          const cols = [];
+          let cur = '', inQ = false;
+          for (let i = 0; i < row.length; i++) {
+            const c = row[i];
+            if (inQ) {
+              if (c === '"' && row[i+1] === '"') { cur += '"'; i++; }
+              else if (c === '"') inQ = false;
+              else cur += c;
+            } else {
+              if (c === '"') inQ = true;
+              else if (c === ',') { cols.push(cur); cur = ''; }
+              else cur += c;
+            }
+          }
+          cols.push(cur);
+          return cols;
+        };
+
+        const parsed = dataRows.map(row => {
+          const cols = parseRow(row);
+          const toChecked = v => v === '済';
+          return {
+            id: Date.now() + Math.random(),
+            name: cols[0] || '',
+            phone: cols[1] || '',
+            contractor: cols[2] || '',
+            user: cols[3] || '',
+            contractDate: cols[4] || '',
+            optionDeadlines: [
+              { name: cols[5] || '', date: cols[6] || '' },
+              { name: cols[7] || '', date: cols[8] || '' },
+              { name: cols[9] || '', date: cols[10] || '' },
+              { name: cols[11] || '', date: cols[12] || '' },
+              { name: cols[13] || '', date: cols[14] || '' },
+            ],
+            transferDate: cols[15] || '',
+            returnDate: cols[16] || '',
+            operationDate: cols[17] || '',
+            memo: cols[18] || '',
+            checklist: {
+              opt1Cancelled: toChecked(cols[19]),
+              opt2Cancelled: toChecked(cols[20]),
+              opt3Cancelled: toChecked(cols[21]),
+              opt4Cancelled: toChecked(cols[22]),
+              opt5Cancelled: toChecked(cols[23]),
+              callConfirmed: toChecked(cols[24]),
+              dataConfirmed: toChecked(cols[25]),
+              smsConfirmed: toChecked(cols[26]),
+            },
+            campaignEmail: cols[27] || '',
+            campaigns: [
+              { name: cols[28] || '', inquiryDate: cols[29] || '', granted: toChecked(cols[30]) },
+              { name: cols[31] || '', inquiryDate: cols[32] || '', granted: toChecked(cols[33]) },
+              { name: cols[34] || '', inquiryDate: cols[35] || '', granted: toChecked(cols[36]) },
+            ],
+          };
+        }).filter(l => l.name);
+
+        if (!parsed.length) { alert('有効なデータが見つかりませんでした。'); return; }
+
+        const merge = confirm(parsed.length + '件のデータを読み込みます。
+
+【OK】現在のデータに追加
+【キャンセル】現在のデータを上書き');
+        if (merge) {
+          lines = [...lines, ...parsed];
+        } else {
+          lines = parsed;
+        }
+        save();
+        renderCards();
+        alert(parsed.length + '件インポートしました。');
+      } catch(err) {
+        alert('読み込みに失敗しました。
+エクスポートしたCSVファイルか確認してください。');
+        console.error(err);
+      }
+      event.target.value = '';
+    };
+    reader.readAsText(file, 'UTF-8');
   }
 
   // ── 初期化 ──────────────────────────────────────
