@@ -632,6 +632,30 @@
       border-bottom: 1.5px solid var(--border);
     }
 
+    /* ── スマホ対応 ───────────────────────────── */
+    @media (max-width: 479px) {
+      /* ヘッダー：テキストを非表示にしてアイコンのみ表示（ボタンがはみ出すのを防ぐ） */
+      header { padding: 10px 12px; }
+      header h1 { font-size: 0.95rem; }
+      .btn-label { display: none; }
+      .add-btn { padding: 8px 10px; }
+      .csv-btn { padding: 7px 9px; }
+      .header-actions { gap: 5px; }
+
+      /* 2カラムフォームを1カラムに */
+      .form-row-2 { grid-template-columns: 1fr; }
+
+      /* オプション行の日付入力を可変幅に */
+      .option-row input[type="date"] { width: auto; min-width: 0; flex: 1; }
+
+      /* カードラベル幅を縮小 */
+      .row-label { min-width: 80px; }
+
+      /* レスポンシブ上書き：カード情報は常に縦並び */
+      .card-rows { flex-direction: column !important; }
+      .card-row  { width: 100% !important; }
+    }
+
   <style id="print-style">
     @media print {
       body > *:not(#printArea) { display: none !important; }
@@ -673,7 +697,7 @@
         <polyline points="7 14 12 9 17 14"/>
         <line x1="12" y1="9" x2="12" y2="21"/>
       </svg>
-      CSV読込
+      <span class="btn-label">CSV読込</span>
       <input type="file" accept=".csv" style="display:none;" onchange="importCSV(event)">
     </label>
     <button class="csv-btn" onclick="printLines()" title="回線一覧を印刷する">
@@ -682,7 +706,7 @@
         <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
         <rect x="6" y="14" width="12" height="8"/>
       </svg>
-      印刷
+      <span class="btn-label">印刷</span>
     </button>
     <button class="csv-btn" onclick="exportCSV()" title="CSVファイルとして書き出す">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -690,13 +714,13 @@
         <polyline points="7 10 12 15 17 10"/>
         <line x1="12" y1="15" x2="12" y2="3"/>
       </svg>
-      CSV出力
+      <span class="btn-label">CSV出力</span>
     </button>
     <button class="add-btn" onclick="addNewPanel()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
       </svg>
-      新しい回線を追加
+      <span class="btn-label">新しい回線を追加</span>
     </button>
   </div>
 </header>
@@ -1273,8 +1297,16 @@
     wrapper.innerHTML = buildPanelHTML(pid);
     container.appendChild(wrapper.firstElementChild);
     const panel = document.getElementById(`panel-${pid}`);
-    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    panel.querySelector('[data-field="name"]').focus();
+    // スティッキーヘッダーの高さ分オフセットしてスクロール
+    setTimeout(() => {
+      const headerH = document.querySelector('header').offsetHeight;
+      const panelTop = panel.getBoundingClientRect().top + window.pageYOffset - headerH - 8;
+      window.scrollTo({ top: panelTop, behavior: 'smooth' });
+    }, 30);
+    // スクロール完了後にフォーカス（モバイルキーボードのスクロール干渉を防ぐ）
+    setTimeout(() => {
+      panel.querySelector('[data-field="name"]').focus();
+    }, 400);
   }
 
   function discardPanel(pid) {
