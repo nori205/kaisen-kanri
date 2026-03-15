@@ -1571,8 +1571,7 @@
     reader.onload = function(e) {
       try {
         const text = e.target.result.replace(/^﻿/, '');
-        const rows = text.split(/?
-/).filter(r => r.trim());
+        const rows = text.split(/\r?\n/).filter(r => r.trim());
         const dataRows = rows.slice(1);
         if (!dataRows.length) { alert('データがありません。'); return; }
 
@@ -1637,10 +1636,7 @@
 
         if (!parsed.length) { alert('有効なデータが見つかりませんでした。'); return; }
 
-        const merge = confirm(parsed.length + '件のデータを読み込みます。
-
-【OK】現在のデータに追加
-【キャンセル】現在のデータを上書き');
+        const merge = confirm(parsed.length + '件のデータを読み込みます。\n\n【OK】現在のデータに追加\n【キャンセル】現在のデータを上書き');
         if (merge) {
           lines = [...lines, ...parsed];
         } else {
@@ -1650,8 +1646,7 @@
         renderCards();
         alert(parsed.length + '件インポートしました。');
       } catch(err) {
-        alert('読み込みに失敗しました。
-エクスポートしたCSVファイルか確認してください。');
+        alert('読み込みに失敗しました。\nエクスポートしたCSVファイルか確認してください。');
         console.error(err);
       }
       event.target.value = '';
